@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Money Fair</title>
+    <title>Money Fair - User App</title>
     <!-- Ad SDK -->
     <script src='//libtl.com/sdk.js' data-zone='10207269' data-sdk='show_10207269'></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -12,15 +12,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s, color 0.3s; }
         .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(0,0,0,0.05); }
         .page { display: none; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; }
         .page.active { display: block; opacity: 1; transform: translateY(0); }
         .tap-effect:active { transform: scale(0.95); transition: transform 0.1s; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ec4899; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .notice-box { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
         
         /* Payment Selection Styles */
@@ -35,16 +33,31 @@
         .scrolling-text { display: inline-block; padding-left: 100%; animation: scroll-left 15s linear infinite; }
         @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* Full Screen Chat Modal */
+        /* Chat Styles */
         #live-chat-modal { transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
         .chat-bubble-me { background-color: #ec4899; color: white; border-radius: 12px 12px 0 12px; align-self: flex-end; padding: 8px 12px; max-width: 80%; box-shadow: 0 1px 2px rgba(236, 72, 153, 0.3); }
         .chat-bubble-admin { background-color: #f3f4f6; color: #374151; border-radius: 12px 12px 12px 0; align-self: flex-start; padding: 8px 12px; max-width: 80%; border: 1px solid #e5e7eb; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: slideIn 0.3s ease-out; }
+
+        /* --- DARK MODE OVERRIDES --- */
+        body.dark { background-color: #0f172a; color: #f1f5f9; }
+        body.dark .bg-white { background-color: #1e293b !important; border-color: #334155 !important; color: #f1f5f9 !important; }
+        body.dark .bg-gray-50 { background-color: #0f172a !important; color: #f1f5f9 !important; }
+        body.dark .bg-gray-100 { background-color: #334155 !important; color: #f1f5f9 !important; }
+        body.dark .text-gray-800, body.dark .text-gray-700, body.dark .text-gray-600 { color: #e2e8f0 !important; }
+        body.dark .text-gray-500, body.dark .text-gray-400 { color: #94a3b8 !important; }
+        body.dark .glass { background: rgba(30, 41, 59, 0.95); border-top: 1px solid rgba(255,255,255,0.1); }
+        body.dark input { background-color: #334155 !important; color: white !important; border-color: #475569 !important; }
+        body.dark .chat-bubble-admin { background-color: #334155; color: #f1f5f9; border-color: #475569; }
+        body.dark .pay-option { background-color: #1e293b; border-color: #334155; }
+        body.dark .pay-option:hover { background-color: #334155; }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative overflow-hidden">
 
     <!-- Auth Screen -->
-    <div id="auth-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 overflow-y-auto">
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 overflow-y-auto transition-colors duration-300">
         <div id="auth-logo-container" class="w-24 h-24 bg-gradient-to-tr from-pink-500 to-violet-500 rounded-3xl flex items-center justify-center shadow-2xl mb-6 overflow-hidden">
             <i class="fa-solid fa-sack-dollar text-5xl text-white"></i>
         </div>
@@ -59,12 +72,12 @@
             <button id="auth-btn" onclick="handleAuth()" class="w-full bg-gradient-to-r from-pink-500 to-violet-600 text-white font-bold py-4 rounded-xl shadow-lg">লগিন করুন</button>
             <p class="text-center text-gray-500 mt-4"><span onclick="toggleAuthMode()" class="text-pink-600 font-bold cursor-pointer" id="auth-toggle-text">নতুন অ্যাকাউন্ট খুলুন</span></p>
         </div>
-        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center"><div class="loader"></div></div>
+        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 flex items-center justify-center z-50"><div class="loader"></div></div>
     </div>
 
     <!-- App Content -->
     <div id="app-content" class="hidden flex-col h-screen relative">
-        <header class="p-5 flex justify-between items-center bg-white sticky top-0 z-20 shadow-sm">
+        <header class="p-5 flex justify-between items-center bg-white sticky top-0 z-20 shadow-sm transition-colors duration-300">
             <div class="flex items-center gap-3">
                 <div id="header-avatar" class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
                     <span id="avatar-initial">U</span>
@@ -77,7 +90,7 @@
             
             <!-- HOME PAGE -->
             <div id="home-page" class="page active">
-                <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-2 flex items-center shadow-sm overflow-hidden">
+                <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-2 flex items-center shadow-sm overflow-hidden dark:bg-slate-800 dark:border-slate-700">
                     <div class="shrink-0 mr-2">
                         <i class="fa-solid fa-bullhorn text-orange-500 animate-pulse"></i>
                     </div>
@@ -90,79 +103,104 @@
 
                 <div class="w-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden mb-6">
                     <div class="relative z-10">
-                        <p class="text-slate-400 text-sm">ব্যালেন্স</p>
+                        <p class="text-slate-400 text-sm" data-lang="balance_title">ব্যালেন্স</p>
                         <h1 class="text-4xl font-bold mt-1">৳ <span id="balance-tk">0.00</span></h1>
-                        <p class="text-xs text-slate-500 mt-1">= <span id="balance-coins">0</span> কয়েন</p>
+                        <p class="text-xs text-slate-500 mt-1">= <span id="balance-coins">0</span> <span data-lang="coins">কয়েন</span></p>
                         <div class="mt-6 flex gap-3">
-                            <button onclick="switchTab('withdraw-page')" class="flex-1 bg-white/10 py-2.5 rounded-xl text-sm font-bold border border-white/10">উত্তোলন</button>
-                            <button onclick="dailyCheckIn()" class="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 py-2.5 rounded-xl text-sm font-bold shadow-lg">বোনাস</button>
+                            <button onclick="switchTab('withdraw-page')" class="flex-1 bg-white/10 py-2.5 rounded-xl text-sm font-bold border border-white/10" data-lang="withdraw_btn">উত্তোলন</button>
+                            <button onclick="dailyCheckIn()" class="flex-1 bg-gradient-to-r from-pink-500 to-violet-500 py-2.5 rounded-xl text-sm font-bold shadow-lg" data-lang="daily_bonus_btn">ডেইলি বোনাস</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4">
-                    <h3 class="font-bold text-gray-700 mb-2">কাজের অগ্রগতি</h3>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="prog-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div>
-                    <p class="text-xs text-gray-500 mt-1 text-right">সম্পন্ন: <span id="prog-completed">0</span></p>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4 transition-colors duration-300">
+                    <h3 class="font-bold text-gray-700 mb-2" data-lang="work_progress">কাজের অগ্রগতি</h3>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-slate-700"><div id="prog-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div></div>
+                    <p class="text-xs text-gray-500 mt-1 text-right"><span data-lang="completed">সম্পন্ন:</span> <span id="prog-completed">0</span></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2 text-blue-500"><i class="fa-solid fa-play"></i></div>
-                        <p class="text-gray-400 text-xs font-bold">ভিডিও</p>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center transition-colors duration-300">
+                        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2 text-blue-500 dark:bg-slate-700"><i class="fa-solid fa-play"></i></div>
+                        <p class="text-gray-400 text-xs font-bold" data-lang="task_video">ভিডিও</p>
                         <p class="text-xl font-bold text-gray-800"><span id="count-video">0</span>/<span id="limit-video-display">0</span></p>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
-                        <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2 text-purple-500"><i class="fa-solid fa-arrows-spin"></i></div>
-                        <p class="text-gray-400 text-xs font-bold">স্পিন</p>
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center transition-colors duration-300">
+                        <div class="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-2 text-purple-500 dark:bg-slate-700"><i class="fa-solid fa-arrows-spin"></i></div>
+                        <p class="text-gray-400 text-xs font-bold" data-lang="task_spin">স্পিন</p>
                         <p class="text-xl font-bold text-gray-800"><span id="count-spin">0</span>/<span id="limit-spin-display">0</span></p>
                     </div>
                 </div>
 
-                <button onclick="switchTab('task-page', document.getElementById('nav-task'))" class="w-full bg-violet-100 text-violet-600 py-3 rounded-xl font-bold mb-4">সকল কাজ দেখুন</button>
-                <button onclick="contactAdmin()" class="w-full border border-gray-300 text-gray-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-telegram"></i> জয়েন টেলিগ্রাম চ্যানেল</button>
+                <button onclick="switchTab('task-page', document.getElementById('nav-task'))" class="w-full bg-violet-100 text-violet-600 py-3 rounded-xl font-bold mb-4 dark:bg-slate-700 dark:text-violet-400" data-lang="see_all_tasks">সকল কাজ দেখুন</button>
+                <button onclick="contactAdmin()" class="w-full border border-gray-300 text-gray-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 dark:border-slate-600 dark:text-gray-300"><i class="fa-brands fa-telegram"></i> <span data-lang="join_telegram">জয়েন টেলিগ্রাম চ্যানেল</span></button>
             </div>
 
-            <!-- TASK PAGE -->
+            <!-- TASK PAGE (UPDATED WITH REWARD POINTS) -->
             <div id="task-page" class="page">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">টাস্ক লিস্ট</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4" data-lang="task_list_title">টাস্ক লিস্ট</h2>
                 <div class="space-y-3 mb-6">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect" onclick="startAdTask('video')">
+                    
+                    <!-- VIDEO AD CARD -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect transition-colors duration-300" onclick="startAdTask('video')">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-500 text-xl"><i class="fa-solid fa-play"></i></div>
-                                <div><h4 class="font-bold text-gray-800">ভিডিও অ্যাড</h4><p class="text-xs text-gray-500">লিমিট: <span id="limit-video-task">0</span></p></div>
+                                <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center text-red-500 text-xl dark:bg-slate-700"><i class="fa-solid fa-play"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-200" data-lang="task_video_ad">ভিডিও অ্যাড</h4>
+                                    <p class="text-xs text-gray-500"><span data-lang="limit">লিমিট:</span> <span id="limit-video-task">0</span></p>
+                                    <!-- REWARD DISPLAY -->
+                                    <p class="text-xs text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded w-fit dark:bg-slate-700 dark:text-blue-400">
+                                       <span data-lang="reward_lbl">পয়েন্ট:</span> <span id="reward-video">0</span>
+                                    </p>
+                                </div>
                             </div>
-                            <button class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-xs font-bold">Start</button>
+                            <button class="bg-red-50 text-red-500 px-3 py-1 rounded-lg text-xs font-bold dark:bg-slate-700">Start</button>
                         </div>
-                        <div id="rule-video" class="hidden mt-2 text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100"></div>
+                        <div id="rule-video" class="hidden mt-2 text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100 dark:bg-slate-700 dark:border-slate-600"></div>
                     </div>
 
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect" onclick="startAdTask('spin')">
+                    <!-- SPIN CARD -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect transition-colors duration-300" onclick="startAdTask('spin')">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-500 text-xl"><i class="fa-solid fa-arrows-spin"></i></div>
-                                <div><h4 class="font-bold text-gray-800">লাকি স্পিন</h4><p class="text-xs text-gray-500">লিমিট: <span id="limit-spin-task">0</span></p></div>
+                                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-500 text-xl dark:bg-slate-700"><i class="fa-solid fa-arrows-spin"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-200" data-lang="task_lucky_spin">লাকি স্পিন</h4>
+                                    <p class="text-xs text-gray-500"><span data-lang="limit">লিমিট:</span> <span id="limit-spin-task">0</span></p>
+                                    <!-- REWARD DISPLAY -->
+                                    <p class="text-xs text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded w-fit dark:bg-slate-700 dark:text-blue-400">
+                                       <span data-lang="reward_lbl">পয়েন্ট:</span> <span id="reward-spin">0</span>
+                                    </p>
+                                </div>
                             </div>
-                            <button class="bg-purple-50 text-purple-500 px-3 py-1 rounded-lg text-xs font-bold">Spin</button>
+                            <button class="bg-purple-50 text-purple-500 px-3 py-1 rounded-lg text-xs font-bold dark:bg-slate-700">Spin</button>
                         </div>
-                        <div id="rule-spin" class="hidden mt-2 text-xs text-purple-500 bg-purple-50 p-2 rounded border border-purple-100"></div>
+                        <div id="rule-spin" class="hidden mt-2 text-xs text-purple-500 bg-purple-50 p-2 rounded border border-purple-100 dark:bg-slate-700 dark:border-slate-600"></div>
                     </div>
 
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect" onclick="startAdTask('scratch')">
+                    <!-- SCRATCH CARD -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 tap-effect transition-colors duration-300" onclick="startAdTask('scratch')">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-500 text-xl"><i class="fa-solid fa-ticket"></i></div>
-                                <div><h4 class="font-bold text-gray-800">স্ক্র্যাচ কার্ড</h4><p class="text-xs text-gray-500">লিমিট: <span id="limit-scratch-task">0</span></p></div>
+                                <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-green-500 text-xl dark:bg-slate-700"><i class="fa-solid fa-ticket"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-200" data-lang="task_scratch">স্ক্র্যাচ কার্ড</h4>
+                                    <p class="text-xs text-gray-500"><span data-lang="limit">লিমিট:</span> <span id="limit-scratch-task">0</span></p>
+                                    <!-- REWARD DISPLAY -->
+                                    <p class="text-xs text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded w-fit dark:bg-slate-700 dark:text-blue-400">
+                                       <span data-lang="reward_lbl">পয়েন্ট:</span> <span id="reward-scratch">0</span>
+                                    </p>
+                                </div>
                             </div>
-                            <button class="bg-green-50 text-green-500 px-3 py-1 rounded-lg text-xs font-bold">Play</button>
+                            <button class="bg-green-50 text-green-500 px-3 py-1 rounded-lg text-xs font-bold dark:bg-slate-700">Play</button>
                         </div>
-                        <div id="rule-scratch" class="hidden mt-2 text-xs text-green-500 bg-green-50 p-2 rounded border border-green-100"></div>
+                        <div id="rule-scratch" class="hidden mt-2 text-xs text-green-500 bg-green-50 p-2 rounded border border-green-100 dark:bg-slate-700 dark:border-slate-600"></div>
                     </div>
                 </div>
 
-                <h3 class="font-bold text-gray-700 mb-2">সোশ্যাল টাস্ক (ডেইলি রিওয়ার্ড)</h3>
-                <div id="rule-social" class="notice-box hidden mb-3 bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-700 flex gap-2">
+                <h3 class="font-bold text-gray-700 mb-2" data-lang="social_task_title">সোশ্যাল টাস্ক (ডেইলি রিওয়ার্ড)</h3>
+                <div id="rule-social" class="notice-box hidden mb-3 bg-blue-50 border border-blue-200 p-3 rounded-xl text-xs text-blue-700 flex gap-2 dark:bg-slate-800 dark:border-slate-700 dark:text-blue-400">
                     <i class="fa-solid fa-circle-info mt-0.5"></i> <span id="rule-social-text"></span>
                 </div>
                 
@@ -171,12 +209,12 @@
 
             <!-- WITHDRAW PAGE -->
             <div id="withdraw-page" class="page">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">টাকা উত্তোলন</h2>
-                <div id="rule-withdraw" class="notice-box hidden mb-4 bg-orange-50 border border-orange-200 p-3 rounded-xl text-xs text-orange-800 flex gap-2">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6" data-lang="withdraw_title">টাকা উত্তোলন</h2>
+                <div id="rule-withdraw" class="notice-box hidden mb-4 bg-orange-50 border border-orange-200 p-3 rounded-xl text-xs text-orange-800 flex gap-2 dark:bg-slate-800 dark:border-slate-700 dark:text-orange-400">
                     <i class="fa-solid fa-triangle-exclamation mt-0.5"></i> <span id="rule-withdraw-text"></span>
                 </div>
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                    <p class="text-sm text-gray-500 mb-4 font-bold">মেথড সিলেক্ট করুন</p>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8 transition-colors duration-300">
+                    <p class="text-sm text-gray-500 mb-4 font-bold" data-lang="select_method">মেথড সিলেক্ট করুন</p>
                     
                     <div id="payment-methods-grid" class="grid grid-cols-3 gap-3 mb-6">
                         <!-- Methods will load here -->
@@ -186,62 +224,107 @@
                         <input type="number" id="w-amount" class="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" placeholder="পরিমাণ (টাকা)">
                         <input type="tel" id="w-number" class="w-full p-4 bg-gray-50 rounded-xl font-bold outline-none" placeholder="নাম্বার (01xxxxxxxxx)">
                     </div>
-                    <button onclick="submitWithdraw()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl mt-6 shadow-lg">উত্তোলন করুন</button>
-                    <p class="text-center text-xs text-gray-400 mt-3">মিনিমাম উত্তোলন: <span id="min-withdraw-display">...</span> টাকা</p>
+                    <button onclick="submitWithdraw()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl mt-6 shadow-lg dark:bg-pink-600" data-lang="withdraw_submit_btn">উত্তোলন করুন</button>
+                    <p class="text-center text-xs text-gray-400 mt-3"><span data-lang="min_withdraw">মিনিমাম উত্তোলন:</span> <span id="min-withdraw-display">...</span> <span data-lang="tk">টাকা</span></p>
                 </div>
                 <div>
-                    <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">পেমেন্ট হিস্টরি</h3>
+                    <h3 class="font-bold text-gray-700 mb-4 border-b pb-2" data-lang="payment_history">পেমেন্ট হিস্টরি</h3>
                     <div id="payment-history-list" class="space-y-3 pb-6"><div class="text-center text-gray-400 text-sm py-4">লোড হচ্ছে...</div></div>
                 </div>
             </div>
 
             <!-- PROFILE PAGE -->
             <div id="profile-page" class="page">
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center mb-6">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-3xl text-blue-600 font-bold mb-3 overflow-hidden">
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center mb-6 transition-colors duration-300">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-3xl text-blue-600 font-bold mb-3 overflow-hidden dark:bg-slate-700">
                         <span id="p-initial">U</span>
                     </div>
                     <h2 class="text-xl font-bold text-gray-800" id="p-name">Name</h2>
                     <p class="text-sm text-gray-500" id="p-email">email</p>
-                    <div class="mt-6 bg-gray-50 p-4 rounded-xl flex justify-between items-center">
-                        <div class="text-left"><p class="text-xs text-gray-500">রেফার কোড</p><p class="text-lg font-bold text-gray-800 tracking-widest" id="p-code">......</p></div>
-                        <button onclick="copyCode()" class="bg-white p-2 rounded-lg shadow-sm text-blue-500"><i class="fa-regular fa-copy"></i></button>
+                    
+                    <div class="mt-6 bg-gray-50 p-4 rounded-xl flex justify-between items-center transition-colors duration-300">
+                        <div class="text-left"><p class="text-xs text-gray-500" data-lang="refer_code_lbl">রেফার কোড</p><p class="text-lg font-bold text-gray-800 tracking-widest" id="p-code">......</p></div>
+                        <button onclick="copyCode()" class="bg-white p-2 rounded-lg shadow-sm text-blue-500 dark:bg-slate-700"><i class="fa-regular fa-copy"></i></button>
                     </div>
-                    <div class="mt-4 bg-orange-50 p-3 rounded-lg"><p class="text-xs text-orange-600">মোট রেফার</p><p class="font-bold text-orange-800 text-xl" id="p-refer-count">0</p></div>
+                    <div class="mt-4 bg-orange-50 p-3 rounded-lg dark:bg-slate-700"><p class="text-xs text-orange-600 dark:text-orange-400" data-lang="total_refer">মোট রেফার</p><p class="font-bold text-orange-800 text-xl dark:text-orange-300" id="p-refer-count">0</p></div>
                 </div>
-                <button onclick="logout()" class="w-full bg-red-50 text-red-500 font-bold py-4 rounded-2xl border border-red-100">লগআউট</button>
+
+                <!-- SETTINGS SECTION -->
+                <div class="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 mb-6 transition-colors duration-300">
+                    <h3 class="font-bold text-gray-700 mb-3 border-b pb-2" data-lang="settings_title">সেটিংস</h3>
+                    
+                    <!-- Language Switch -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-language"></i></div>
+                            <span class="font-bold text-gray-600 text-sm" data-lang="language_lbl">ভাষা (Language)</span>
+                        </div>
+                        <div class="flex bg-gray-100 rounded-lg p-1 dark:bg-slate-700">
+                            <button onclick="switchLanguage('bn')" id="btn-bn" class="px-3 py-1 text-xs font-bold rounded-md bg-white shadow text-pink-600 dark:bg-slate-600">বাংলা</button>
+                            <button onclick="switchLanguage('en')" id="btn-en" class="px-3 py-1 text-xs font-bold rounded-md text-gray-500">Eng</button>
+                        </div>
+                    </div>
+
+                    <!-- Dark Mode Switch -->
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center"><i class="fa-solid fa-moon"></i></div>
+                            <span class="font-bold text-gray-600 text-sm" data-lang="dark_mode_lbl">ডার্ক মোড</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="dark-mode-toggle" class="sr-only peer" onchange="toggleDarkMode()">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="logout()" class="w-full bg-red-50 text-red-500 font-bold py-4 rounded-2xl border border-red-100 dark:bg-red-900/20 dark:border-red-900/30" data-lang="logout_btn">লগআউট</button>
             </div>
         </main>
 
-        <!-- FLOATING CHAT BUTTON -->
-        <button onclick="toggleChat()" class="fixed bottom-20 right-4 bg-blue-600 text-white w-14 h-14 rounded-full shadow-xl z-30 flex items-center justify-center text-2xl animate-bounce">
-            <i class="fa-solid fa-comments"></i>
-        </button>
+        <!-- Notification Toast (Hidden by default) -->
+        <div id="chat-toast" class="fixed top-4 left-0 right-0 mx-auto w-max z-50 hidden bg-white text-gray-800 px-4 py-2 rounded-xl shadow-xl border-l-4 border-blue-600 animate-bounce flex items-center gap-2 dark:bg-slate-800 dark:text-white">
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fa-solid fa-headset"></i></div>
+            <div>
+                <p class="text-xs font-bold text-gray-500" data-lang="support_lbl">সাপোর্ট</p>
+                <p class="text-sm font-bold" data-lang="new_msg_lbl">নতুন মেসেজ এসেছে!</p>
+            </div>
+        </div>
+        <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.m4a" preload="auto"></audio>
 
-        <!-- LIVE CHAT MODAL (FULL SCREEN) -->
-        <div id="live-chat-modal" class="fixed inset-0 z-50 bg-white transform translate-y-full flex flex-col h-screen">
+        <!-- LIVE CHAT MODAL -->
+        <div id="live-chat-modal" class="fixed inset-0 z-50 bg-white transform translate-y-full flex flex-col h-screen dark:bg-slate-900">
             <div class="bg-blue-600 p-4 text-white flex justify-between items-center shadow-md sticky top-0 z-50">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-headset text-xl"></i>
-                    <h2 class="font-bold">সাপোর্ট চ্যাট</h2>
+                    <h2 class="font-bold" data-lang="support_chat_title">সাপোর্ট চ্যাট</h2>
                 </div>
                 <button onclick="toggleChat()" class="text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div id="chat-box" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 pb-20">
-                <!-- Messages will load here -->
-                <div class="text-center text-gray-400 text-xs mt-4">অ্যাডমিনকে আপনার সমস্যা বিস্তারিত লিখুন</div>
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 pb-20 dark:bg-slate-800">
+                <div class="text-center text-gray-400 text-xs mt-4" data-lang="chat_welcome">অ্যাডমিনকে আপনার সমস্যা বিস্তারিত লিখুন</div>
             </div>
-            <div class="p-3 bg-white border-t flex gap-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] sticky bottom-0 z-50">
-                <input type="text" id="chat-input" class="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none border focus:border-blue-500 transition" placeholder="মেসেজ লিখুন..." onkeypress="handleEnter(event)">
+            <div class="p-3 bg-white border-t flex gap-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] sticky bottom-0 z-50 dark:bg-slate-900 dark:border-slate-700">
+                <input type="text" id="chat-input" class="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none border focus:border-blue-500 transition dark:bg-slate-800 dark:text-white dark:border-slate-700" placeholder="মেসেজ লিখুন..." onkeypress="handleEnter(event)">
                 <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
 
+        <!-- BOTTOM NAV BAR (WITH CHAT BUTTON) -->
         <nav class="glass absolute bottom-0 left-0 right-0 z-40 flex justify-around py-3 px-2 shadow-lg">
-            <div onclick="switchTab('home-page', this)" class="nav-item active flex flex-col items-center gap-1 p-2 rounded-xl text-pink-500 w-16 cursor-pointer"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold">হোম</span></div>
-            <div id="nav-task" onclick="switchTab('task-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-list-check text-xl"></i><span class="text-[10px] font-bold">টাস্ক</span></div>
-            <div onclick="switchTab('withdraw-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-wallet text-xl"></i><span class="text-[10px] font-bold">টাকা</span></div>
-            <div onclick="switchTab('profile-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px] font-bold">প্রোফাইল</span></div>
+            <div onclick="switchTab('home-page', this)" class="nav-item active flex flex-col items-center gap-1 p-2 rounded-xl text-pink-500 w-16 cursor-pointer"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold" data-lang="nav_home">হোম</span></div>
+            <div id="nav-task" onclick="switchTab('task-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-list-check text-xl"></i><span class="text-[10px] font-bold" data-lang="nav_task">টাস্ক</span></div>
+            
+            <!-- LIVE CHAT NAV ITEM -->
+            <div onclick="toggleChat()" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer relative">
+                <i class="fa-solid fa-headset text-xl"></i>
+                <span class="text-[10px] font-bold" data-lang="nav_support">সাপোর্ট</span>
+                <!-- Chat Badge -->
+                <span id="chat-badge" class="hidden absolute top-1 right-3 bg-red-500 text-white text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center border-2 border-white animate-pulse">1</span>
+            </div>
+
+            <div onclick="switchTab('withdraw-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-wallet text-xl"></i><span class="text-[10px] font-bold" data-lang="nav_wallet">টাকা</span></div>
+            <div onclick="switchTab('profile-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px] font-bold" data-lang="nav_profile">প্রোফাইল</span></div>
         </nav>
     </div>
 
@@ -266,6 +349,96 @@
         let currentUser = null, userData = null, appConfig = {};
         let selectedMethod = "";
         let chatUnsub = null;
+        let isChatOpen = false;
+        let isFirstLoad = true;
+
+        // --- LANGUAGE & THEME DICTIONARY ---
+        const langData = {
+            bn: {
+                balance_title: "ব্যালেন্স", coins: "কয়েন", withdraw_btn: "উত্তোলন", daily_bonus_btn: "ডেইলি বোনাস", work_progress: "কাজের অগ্রগতি",
+                completed: "সম্পন্ন:", task_video: "ভিডিও", task_spin: "স্পিন", see_all_tasks: "সকল কাজ দেখুন", join_telegram: "জয়েন টেলিগ্রাম চ্যানেল",
+                task_list_title: "টাস্ক লিস্ট", task_video_ad: "ভিডিও অ্যাড", limit: "লিমিট:", reward_lbl: "পয়েন্ট:", task_lucky_spin: "লাকি স্পিন", task_scratch: "স্ক্র্যাচ কার্ড",
+                social_task_title: "সোশ্যাল টাস্ক (ডেইলি রিওয়ার্ড)", withdraw_title: "টাকা উত্তোলন", select_method: "মেথড সিলেক্ট করুন", withdraw_submit_btn: "উত্তোলন করুন",
+                min_withdraw: "মিনিমাম উত্তোলন:", tk: "টাকা", payment_history: "পেমেন্ট হিস্টরি", refer_code_lbl: "রেফার কোড", total_refer: "মোট রেফার",
+                settings_title: "সেটিংস", language_lbl: "ভাষা (Language)", dark_mode_lbl: "ডার্ক মোড", logout_btn: "লগআউট",
+                nav_home: "হোম", nav_task: "টাস্ক", nav_wallet: "টাকা", nav_profile: "প্রোফাইল", nav_support: "সাপোর্ট", support_lbl: "সাপোর্ট", new_msg_lbl: "নতুন মেসেজ এসেছে!",
+                support_chat_title: "সাপোর্ট চ্যাট", chat_welcome: "অ্যাডমিনকে আপনার সমস্যা বিস্তারিত লিখুন"
+            },
+            en: {
+                balance_title: "Balance", coins: "Coins", withdraw_btn: "Withdraw", daily_bonus_btn: "Daily Bonus", work_progress: "Task Progress",
+                completed: "Done:", task_video: "Video", task_spin: "Spin", see_all_tasks: "View All Tasks", join_telegram: "Join Telegram Channel",
+                task_list_title: "Task List", task_video_ad: "Video Ad", limit: "Limit:", reward_lbl: "Points:", task_lucky_spin: "Lucky Spin", task_scratch: "Scratch Card",
+                social_task_title: "Social Tasks (Daily Reward)", withdraw_title: "Withdraw Money", select_method: "Select Method", withdraw_submit_btn: "Withdraw Now",
+                min_withdraw: "Min Withdraw:", tk: "BDT", payment_history: "Payment History", refer_code_lbl: "Referral Code", total_refer: "Total Refer",
+                settings_title: "Settings", language_lbl: "Language", dark_mode_lbl: "Dark Mode", logout_btn: "Logout",
+                nav_home: "Home", nav_task: "Tasks", nav_wallet: "Wallet", nav_profile: "Profile", nav_support: "Support", support_lbl: "Support", new_msg_lbl: "New Message Received!",
+                support_chat_title: "Support Chat", chat_welcome: "Describe your issue to admin"
+            }
+        };
+
+        // --- SETTINGS LOGIC ---
+        window.currentLang = localStorage.getItem('mf_lang') || 'bn';
+        window.isDarkMode = localStorage.getItem('mf_dark') === 'true';
+
+        function applySettings() {
+            // Apply Dark Mode
+            if(window.isDarkMode) {
+                document.body.classList.add('dark');
+                document.getElementById('dark-mode-toggle').checked = true;
+            } else {
+                document.body.classList.remove('dark');
+                document.getElementById('dark-mode-toggle').checked = false;
+            }
+            // Apply Language
+            updateText();
+            updateLangButtons();
+        }
+
+        window.toggleDarkMode = () => {
+            window.isDarkMode = !window.isDarkMode;
+            localStorage.setItem('mf_dark', window.isDarkMode);
+            applySettings();
+        };
+
+        window.switchLanguage = (lang) => {
+            window.currentLang = lang;
+            localStorage.setItem('mf_lang', lang);
+            updateText();
+            updateLangButtons();
+        };
+
+        function updateLangButtons() {
+            const btnBn = document.getElementById('btn-bn');
+            const btnEn = document.getElementById('btn-en');
+            if(window.currentLang === 'bn') {
+                btnBn.classList.add('bg-white', 'shadow', 'text-pink-600'); btnBn.classList.remove('text-gray-500');
+                btnEn.classList.remove('bg-white', 'shadow', 'text-pink-600'); btnEn.classList.add('text-gray-500');
+            } else {
+                btnEn.classList.add('bg-white', 'shadow', 'text-pink-600'); btnEn.classList.remove('text-gray-500');
+                btnBn.classList.remove('bg-white', 'shadow', 'text-pink-600'); btnBn.classList.add('text-gray-500');
+            }
+        }
+
+        function updateText() {
+            const data = langData[window.currentLang];
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if(data[key]) el.innerText = data[key];
+            });
+            // Inputs placeholder update
+            if(window.currentLang === 'en') {
+                if(document.getElementById('w-amount')) document.getElementById('w-amount').placeholder = "Amount (TK)";
+                if(document.getElementById('w-number')) document.getElementById('w-number').placeholder = "Number (01xxxxxxxxx)";
+                if(document.getElementById('chat-input')) document.getElementById('chat-input').placeholder = "Write message...";
+            } else {
+                if(document.getElementById('w-amount')) document.getElementById('w-amount').placeholder = "পরিমাণ (টাকা)";
+                if(document.getElementById('w-number')) document.getElementById('w-number').placeholder = "নাম্বার (01xxxxxxxxx)";
+                if(document.getElementById('chat-input')) document.getElementById('chat-input').placeholder = "মেসেজ লিখুন...";
+            }
+        }
+        
+        // Load settings immediately
+        applySettings();
 
         // UI Helpers
         window.switchTab = (id, btn) => {
@@ -281,10 +454,14 @@
             const btn = document.getElementById('auth-btn');
             const toggle = document.getElementById('auth-toggle-text');
             const fields = document.getElementById('signup-fields');
-            if(btn.innerText.includes('লগিন')) {
-                btn.innerText = 'সাইন আপ করুন'; toggle.innerText = 'লগিন করুন'; fields.classList.remove('hidden');
+            if(btn.innerText.includes('লগিন') || btn.innerText.includes('Login')) {
+                btn.innerText = window.currentLang === 'en' ? 'Sign Up' : 'সাইন আপ করুন'; 
+                toggle.innerText = window.currentLang === 'en' ? 'Login' : 'লগিন করুন'; 
+                fields.classList.remove('hidden');
             } else {
-                btn.innerText = 'লগিন করুন'; toggle.innerText = 'নতুন অ্যাকাউন্ট খুলুন'; fields.classList.add('hidden');
+                btn.innerText = window.currentLang === 'en' ? 'Login' : 'লগিন করুন'; 
+                toggle.innerText = window.currentLang === 'en' ? 'Create Account' : 'নতুন অ্যাকাউন্ট খুলুন'; 
+                fields.classList.add('hidden');
             }
         };
 
@@ -313,6 +490,12 @@
                 document.getElementById('limit-scratch-task').innerText = limits.scratch || 0;
                 document.getElementById('min-withdraw-display').innerText = appConfig.minWithdraw || 50;
                 
+                // --- REWARDS DISPLAY LOGIC ---
+                const rewards = appConfig.rewards || {};
+                document.getElementById('reward-video').innerText = rewards.video || 50;
+                document.getElementById('reward-spin').innerText = rewards.spin || 20;
+                document.getElementById('reward-scratch').innerText = rewards.scratch || 30;
+
                 const notices = appConfig.notices || [];
                 if(notices.length > 0) document.getElementById('notice-text').innerText = notices.map(n => n.text).join(' | ');
 
@@ -328,7 +511,7 @@
         function renderPaymentMethods(methods) {
             const container = document.getElementById('payment-methods-grid');
             if(methods.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400 col-span-3 text-center">কোনো মেথড পাওয়া যায়নি</p>';
+                container.innerHTML = '<p class="text-xs text-gray-400 col-span-3 text-center">No methods found</p>';
                 return;
             }
             container.innerHTML = '';
@@ -337,7 +520,7 @@
                     <div onclick="selectPayment('${m.name}', this)" class="pay-option rounded-xl p-2 flex flex-col items-center justify-center cursor-pointer bg-white h-24 transition-all hover:bg-gray-50">
                         <div class="check-mark"><i class="fa-solid fa-check"></i></div>
                         <img src="${m.logo}" class="h-10 w-auto object-contain mb-2" alt="${m.name}">
-                        <span class="text-[10px] font-bold text-gray-600 uppercase">${m.name}</span>
+                        <span class="text-[10px] font-bold text-gray-600 uppercase dark:text-gray-300">${m.name}</span>
                     </div>
                 `;
             });
@@ -394,7 +577,7 @@
                 if(item.status === 'approved') statusColor = "bg-green-100 text-green-700";
                 if(item.status === 'rejected') statusColor = "bg-red-100 text-red-700";
                 const date = item.requestedAt ? new Date(item.requestedAt.seconds * 1000).toLocaleDateString() : 'N/A';
-                const html = `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"><div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-gray-800">${item.method}</span><span class="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${statusColor}">${item.status}</span></div><p class="text-xs text-gray-400">${date} - ${item.paymentDetail}</p></div><div class="text-right"><p class="font-bold text-gray-800 text-lg">৳${item.amount}</p></div></div>`;
+                const html = `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center transition-colors duration-300"><div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-gray-800 dark:text-gray-200">${item.method}</span><span class="text-[10px] px-2 py-0.5 rounded-full uppercase font-bold ${statusColor}">${item.status}</span></div><p class="text-xs text-gray-400">${date} - ${item.paymentDetail}</p></div><div class="text-right"><p class="font-bold text-gray-800 text-lg dark:text-gray-200">৳${item.amount}</p></div></div>`;
                 listContainer.innerHTML += html;
             });
         }
@@ -403,7 +586,7 @@
         window.handleAuth = async () => {
             const email = document.getElementById('auth-email').value;
             const pass = document.getElementById('auth-pass').value;
-            const isSignup = document.getElementById('auth-btn').innerText.includes('সাইন আপ');
+            const isSignup = document.getElementById('auth-btn').innerText.includes('সাইন') || document.getElementById('auth-btn').innerText.includes('Sign');
             if(!email || !pass) return Swal.fire('Error', 'তথ্য দিন', 'error');
             document.getElementById('loading-overlay').classList.remove('hidden');
             try {
@@ -446,7 +629,22 @@
         // --- CHAT LOGIC ---
         window.toggleChat = () => {
             const modal = document.getElementById('live-chat-modal');
-            modal.classList.toggle('translate-y-full');
+            const badge = document.getElementById('chat-badge');
+            const toast = document.getElementById('chat-toast');
+            
+            if (modal.classList.contains('translate-y-full')) {
+                modal.classList.remove('translate-y-full');
+                isChatOpen = true;
+                badge.classList.add('hidden');
+                toast.classList.add('hidden');
+                setTimeout(() => {
+                    const chatBox = document.getElementById('chat-box');
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 300);
+            } else {
+                modal.classList.add('translate-y-full');
+                isChatOpen = false;
+            }
         };
 
         window.handleEnter = (e) => {
@@ -456,53 +654,68 @@
         function initChat() {
             if(chatUnsub) chatUnsub();
             const q = query(collection(db, "chats", currentUser.uid, "messages"), orderBy("timestamp", "asc"));
+            
             chatUnsub = onSnapshot(q, (snapshot) => {
                 const chatBox = document.getElementById('chat-box');
-                chatBox.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const isMe = data.sender === 'user';
-                    const bubbleClass = isMe ? 'chat-bubble-me' : 'chat-bubble-admin';
-                    
-                    chatBox.innerHTML += `
-                        <div class="mb-3 flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <div class="${bubbleClass} break-words">
-                                ${data.text}
-                            </div>
-                        </div>
-                    `;
+                
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        renderMessageHTML(chatBox, data);
+
+                        if (!isFirstLoad && data.sender !== 'user') {
+                            if (!isChatOpen) {
+                                playNotification();
+                            }
+                        }
+                    }
                 });
-                chatBox.scrollTop = chatBox.scrollHeight;
+
+                if(isFirstLoad) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    isFirstLoad = false;
+                } else {
+                    chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+                }
             });
+        }
+
+        function renderMessageHTML(container, data) {
+            const isMe = data.sender === 'user';
+            const bubbleClass = isMe ? 'chat-bubble-me' : 'chat-bubble-admin';
+            const alignClass = isMe ? 'items-end' : 'items-start';
+            
+            const html = `
+                <div class="mb-3 flex flex-col ${alignClass} animate-fade-in">
+                    <div class="${bubbleClass} break-words text-sm">
+                        ${data.text}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function playNotification() {
+            const audio = document.getElementById('notif-sound');
+            if(audio) audio.play().catch(e => console.log('Audio blocked', e));
+            document.getElementById('chat-badge').classList.remove('hidden');
+            const toast = document.getElementById('chat-toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 5000);
         }
 
         window.sendMessage = async () => {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if(!text) return;
-
             input.value = '';
             
-            // 1. Add message to subcollection
-            await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
-                text: text,
-                sender: 'user',
-                timestamp: serverTimestamp()
-            });
-
-            // 2. Update parent doc for admin list
+            await addDoc(collection(db, "chats", currentUser.uid, "messages"), { text: text, sender: 'user', timestamp: serverTimestamp() });
             const parentRef = doc(db, "chats", currentUser.uid);
-            await setDoc(parentRef, {
-                userId: currentUser.uid,
-                userName: userData.name,
-                lastMessage: text,
-                lastMessageTime: serverTimestamp(),
-                unreadCount: increment(1)
-            }, { merge: true });
+            await setDoc(parentRef, { userId: currentUser.uid, userName: userData.name, lastMessage: text, lastMessageTime: serverTimestamp(), unreadCount: increment(1) }, { merge: true });
         };
-        // -----------------
 
-        // Social Task Logic (UPDATED FOR TIKTOK)
+        // Social Task Logic
         function renderTasks() {
             const container = document.getElementById('social-tasks-container');
             const tasks = appConfig.socialTasks || [];
@@ -512,29 +725,28 @@
             container.innerHTML = '';
             tasks.forEach(t => {
                 const isCompleted = completedMap[t.id] === today;
-                
-                // Icon Logic
                 let icon = 'fa-telegram text-blue-400';
                 if (t.type === 'youtube') icon = 'fa-youtube text-red-600';
                 else if (t.type === 'facebook') icon = 'fa-facebook text-blue-600';
-                else if (t.type === 'tiktok') icon = 'fa-tiktok text-black'; // Added TikTok
+                else if (t.type === 'tiktok') icon = 'fa-tiktok text-black dark:text-white';
 
                 const submitBtnClass = isCompleted ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 shadow-lg";
-                const submitBtnText = isCompleted ? "Done" : "Submit";
+                const submitBtnText = isCompleted ? (window.currentLang === 'en' ? "Done" : "Done") : (window.currentLang === 'en' ? "Submit" : "Submit");
+                const joinText = window.currentLang === 'en' ? "Join" : "Join";
 
-                const html = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                const html = `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between transition-colors duration-300">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-xl"><i class="fa-brands ${icon}"></i></div>
-                        <div><h4 class="font-bold text-gray-800 text-sm">${t.title}</h4><p class="text-xs text-green-600 font-bold">+${t.reward} কয়েন</p></div>
+                        <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-xl dark:bg-slate-700"><i class="fa-brands ${icon}"></i></div>
+                        <div><h4 class="font-bold text-gray-800 text-sm dark:text-gray-200">${t.title}</h4><p class="text-xs text-green-600 font-bold">+${t.reward} ${window.currentLang === 'en'?'Coins':'কয়েন'}</p></div>
                     </div>
                     <div class="flex flex-col items-end gap-2">
-                        <button onclick="openSocialLink('${t.link}')" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold w-20 text-center">Join</button>
+                        <button onclick="openSocialLink('${t.link}')" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold w-20 text-center">${joinText}</button>
                         <button onclick="claimSocialTask('${t.id}', ${t.reward})" class="${submitBtnClass} text-white px-4 py-1.5 rounded-lg text-xs font-bold w-20 text-center">${submitBtnText}</button>
                     </div>
                 </div>`;
                 container.innerHTML += html;
             });
-            if(container.innerHTML === '') container.innerHTML = '<p class="text-center text-gray-400 text-sm">সব টাস্ক সম্পন্ন!</p>';
+            if(container.innerHTML === '') container.innerHTML = '<p class="text-center text-gray-400 text-sm">No tasks available</p>';
         }
 
         window.openSocialLink = (link) => {
@@ -545,49 +757,43 @@
         window.claimSocialTask = async (id, reward) => {
             const today = new Date().toISOString().split('T')[0];
             if(userData.completedSocialTasks && userData.completedSocialTasks[id] === today) {
-                return Swal.fire('Info', 'আজকের জন্য এই কাজটি সম্পন্ন হয়েছে!', 'info');
+                return Swal.fire('Info', 'Task already completed today!', 'info');
             }
-
             const updateData = { balance: increment(reward), [`completedSocialTasks.${id}`]: today };
             await updateDoc(doc(db, "users", currentUser.uid), updateData);
-            Swal.fire('Success', `${reward} কয়েন যোগ হয়েছে!`, 'success');
+            Swal.fire('Success', `${reward} added!`, 'success');
             loadUserData();
         };
 
-        // Ad Task with Dynamic Points
+        // Ad Task
         window.startAdTask = async (type) => {
             const current = (userData.dailyCounts || {})[type] || 0;
             const max = (appConfig.limits || {})[type] || 0;
-            if(max === 0) return Swal.fire('দুঃখিত', 'কাজটি বর্তমানে বন্ধ আছে', 'info');
-            if(current >= max) return Swal.fire('Limit Reached', 'আজকের লিমিট শেষ', 'warning');
+            if(max === 0) return Swal.fire('Sorry', 'Task is currently disabled', 'info');
+            if(current >= max) return Swal.fire('Limit Reached', 'Daily limit reached', 'warning');
             
             if(typeof window.show_10207269 === 'function') {
                 window.show_10207269().then(async () => {
-                    // DYNAMIC REWARDS LOGIC
-                    let reward = 50; // default fallbacks
-                    if(appConfig.rewards && appConfig.rewards[type]) {
-                        reward = appConfig.rewards[type];
-                    } else {
-                        if(type === 'spin') reward = 20;
-                        if(type === 'scratch') reward = 30;
-                    }
+                    let reward = 50;
+                    if(appConfig.rewards && appConfig.rewards[type]) reward = appConfig.rewards[type];
+                    else if(type === 'spin') reward = 20; else if(type === 'scratch') reward = 30;
 
                     const updateKey = `dailyCounts.${type}`;
                     await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(reward), [updateKey]: increment(1) });
-                    Swal.fire('Success', `${reward} কয়েন!`, 'success');
+                    Swal.fire('Success', `${reward} coins added!`, 'success');
                     loadUserData();
-                }).catch(() => Swal.fire('Error', 'অ্যাড লোড হয়নি', 'warning'));
-            } else Swal.fire('Wait', 'অ্যাড লোড হচ্ছে...', 'info');
+                }).catch(() => Swal.fire('Error', 'Ad failed to load', 'warning'));
+            } else Swal.fire('Wait', 'Ad loading...', 'info');
         };
 
         window.dailyCheckIn = async () => {
              const today = new Date().toDateString();
              const bonus = appConfig.dailyBonus || 100;
-             if(userData.lastCheckIn === today) return Swal.fire('Oops', 'বোনাস নেওয়া হয়েছে', 'info');
+             if(userData.lastCheckIn === today) return Swal.fire('Oops', 'Already claimed today', 'info');
              if(typeof window.show_10207269 === 'function') {
                  window.show_10207269().then(async () => {
                      await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(bonus), lastCheckIn: today });
-                     Swal.fire('Success', `${bonus} কয়েন বোনাস!`, 'success'); loadUserData();
+                     Swal.fire('Success', `${bonus} bonus added!`, 'success'); loadUserData();
                  });
              } else Swal.fire('Wait', 'Ad loading...', 'info');
         };
@@ -604,21 +810,21 @@
             const min = appConfig.minWithdraw || 50;
             const balanceTk = (userData.balance || 0) / 100;
 
-            if(!selectedMethod) return Swal.fire('Error', 'মেথড সিলেক্ট করুন', 'warning');
-            if(amount < min) return Swal.fire('Error', `মিনিমাম ${min} টাকা`, 'warning');
-            if(amount > balanceTk) return Swal.fire('Error', 'ব্যালেন্স নেই', 'warning');
-            if(!number) return Swal.fire('Error', 'নাম্বার দিন', 'warning');
-            if(!/^\d{11}$/.test(number)) { return Swal.fire('Error', 'সঠিক ১১ ডিজিটের নাম্বার দিন (যেমন: 01xxxxxxxxx)', 'warning'); }
+            if(!selectedMethod) return Swal.fire('Error', 'Select Payment Method', 'warning');
+            if(amount < min) return Swal.fire('Error', `Minimum ${min} TK`, 'warning');
+            if(amount > balanceTk) return Swal.fire('Error', 'Insufficient Balance', 'warning');
+            if(!number) return Swal.fire('Error', 'Enter Number', 'warning');
+            if(!/^\d{11}$/.test(number)) { return Swal.fire('Error', 'Invalid Number (11 digits required)', 'warning'); }
 
             const processWithdraw = async () => {
                  try {
-                    Swal.fire({ title: 'প্রসেসিং...', didOpen: () => { Swal.showLoading(); } });
+                    Swal.fire({ title: 'Processing...', didOpen: () => { Swal.showLoading(); } });
                     await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-(amount * 100)) });
                     await addDoc(collection(db, "withdrawals"), {
                         userId: currentUser.uid, userName: userData.name, amount: parseInt(amount),
                         method: selectedMethod, paymentDetail: number, status: "pending", requestedAt: serverTimestamp()
                     });
-                    Swal.fire('Success', 'রিকোয়েস্ট সফল!', 'success');
+                    Swal.fire('Success', 'Request Submitted!', 'success');
                     loadUserData();
                     loadPaymentHistory();
                 } catch(e) { Swal.fire('Error', e.message, 'error'); }
@@ -631,23 +837,12 @@
 
         window.contactAdmin = () => {
             const link = appConfig.contactLink;
-            if(link) window.open(link, '_blank'); else Swal.fire('Info', 'লিংক সেট করা হয়নি', 'info');
+            if(link) window.open(link, '_blank'); else Swal.fire('Info', 'Link not set', 'info');
         };
 
         window.copyCode = () => {
             const code = userData.referralCode;
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(code).then(() => Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'কপি হয়েছে', timer: 1500, showConfirmButton: false }));
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = code;
-                textArea.style.position = "fixed"; textArea.style.left = "-9999px";
-                document.body.appendChild(textArea);
-                textArea.focus(); textArea.select();
-                try { document.execCommand('copy'); Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'কপি হয়েছে', timer: 1500, showConfirmButton: false }); } 
-                catch (err) { Swal.fire('Error', 'কপি করা যায়নি', 'error'); }
-                document.body.removeChild(textArea);
-            }
+            navigator.clipboard.writeText(code).then(() => Swal.fire({ toast: true, position: 'top', icon: 'success', title: 'Copied', timer: 1500, showConfirmButton: false }));
         };
 
         window.logout = () => signOut(auth).then(() => window.location.reload());
