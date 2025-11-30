@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Money Fair - User App</title>
+    <title>Money Fair</title>
     <!-- Ad SDK -->
     <script src='//libtl.com/sdk.js' data-zone='10207269' data-sdk='show_10207269'></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,48 +26,19 @@
         /* Payment Selection Styles */
         .pay-option { position: relative; transition: all 0.2s; border: 2px solid #f3f4f6; }
         .pay-selected { border-color: #ec4899 !important; background-color: #fdf2f8 !important; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        
-        /* Tick Mark Styles */
-        .check-mark {
-            display: none;
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ec4899;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
+        .check-mark { display: none; position: absolute; top: -8px; right: -8px; background: #ec4899; color: white; border-radius: 50%; width: 20px; height: 20px; align-items: center; justify-content: center; font-size: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; }
         .pay-selected .check-mark { display: flex; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
-        /* FIXED: Scrolling Text Animation */
-        .scrolling-container {
-            flex: 1;
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-            /* Optional: Fades text at edges for better look */
-            mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-            -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-        }
+        /* Scrolling Text Animation */
+        .scrolling-container { flex: 1; overflow: hidden; white-space: nowrap; position: relative; mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); }
+        .scrolling-text { display: inline-block; padding-left: 100%; animation: scroll-left 15s linear infinite; }
+        @keyframes scroll-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        .scrolling-text {
-            display: inline-block;
-            padding-left: 100%; /* Start from right outside */
-            animation: scroll-left 15s linear infinite; /* Adjust speed here (15s) */
-        }
-
-        @keyframes scroll-left {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
+        /* Full Screen Chat Modal */
+        #live-chat-modal { transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        .chat-bubble-me { background-color: #ec4899; color: white; border-radius: 12px 12px 0 12px; align-self: flex-end; padding: 8px 12px; max-width: 80%; box-shadow: 0 1px 2px rgba(236, 72, 153, 0.3); }
+        .chat-bubble-admin { background-color: #f3f4f6; color: #374151; border-radius: 12px 12px 12px 0; align-self: flex-start; padding: 8px 12px; max-width: 80%; border: 1px solid #e5e7eb; }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative overflow-hidden">
@@ -92,7 +63,7 @@
     </div>
 
     <!-- App Content -->
-    <div id="app-content" class="hidden flex-col h-screen">
+    <div id="app-content" class="hidden flex-col h-screen relative">
         <header class="p-5 flex justify-between items-center bg-white sticky top-0 z-20 shadow-sm">
             <div class="flex items-center gap-3">
                 <div id="header-avatar" class="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
@@ -106,7 +77,6 @@
             
             <!-- HOME PAGE -->
             <div id="home-page" class="page active">
-                <!-- UPDATED MARQUEE SECTION -->
                 <div class="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-2 flex items-center shadow-sm overflow-hidden">
                     <div class="shrink-0 mr-2">
                         <i class="fa-solid fa-bullhorn text-orange-500 animate-pulse"></i>
@@ -150,7 +120,7 @@
                 </div>
 
                 <button onclick="switchTab('task-page', document.getElementById('nav-task'))" class="w-full bg-violet-100 text-violet-600 py-3 rounded-xl font-bold mb-4">সকল কাজ দেখুন</button>
-                <button onclick="contactAdmin()" class="w-full border border-gray-300 text-gray-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-telegram"></i> অ্যাডমিনের সাথে যোগাযোগ</button>
+                <button onclick="contactAdmin()" class="w-full border border-gray-300 text-gray-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2"><i class="fa-brands fa-telegram"></i> জয়েন টেলিগ্রাম চ্যানেল</button>
             </div>
 
             <!-- TASK PAGE -->
@@ -208,7 +178,6 @@
                 <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8">
                     <p class="text-sm text-gray-500 mb-4 font-bold">মেথড সিলেক্ট করুন</p>
                     
-                    <!-- Dynamic Payment Grid with Logo & Tick -->
                     <div id="payment-methods-grid" class="grid grid-cols-3 gap-3 mb-6">
                         <!-- Methods will load here -->
                     </div>
@@ -244,6 +213,30 @@
             </div>
         </main>
 
+        <!-- FLOATING CHAT BUTTON -->
+        <button onclick="toggleChat()" class="fixed bottom-20 right-4 bg-blue-600 text-white w-14 h-14 rounded-full shadow-xl z-30 flex items-center justify-center text-2xl animate-bounce">
+            <i class="fa-solid fa-comments"></i>
+        </button>
+
+        <!-- LIVE CHAT MODAL (FULL SCREEN) -->
+        <div id="live-chat-modal" class="fixed inset-0 z-50 bg-white transform translate-y-full flex flex-col h-screen">
+            <div class="bg-blue-600 p-4 text-white flex justify-between items-center shadow-md sticky top-0 z-50">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-headset text-xl"></i>
+                    <h2 class="font-bold">সাপোর্ট চ্যাট</h2>
+                </div>
+                <button onclick="toggleChat()" class="text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 flex flex-col bg-gray-50 pb-20">
+                <!-- Messages will load here -->
+                <div class="text-center text-gray-400 text-xs mt-4">অ্যাডমিনকে আপনার সমস্যা বিস্তারিত লিখুন</div>
+            </div>
+            <div class="p-3 bg-white border-t flex gap-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] sticky bottom-0 z-50">
+                <input type="text" id="chat-input" class="flex-1 bg-gray-100 rounded-full px-4 py-2 outline-none border focus:border-blue-500 transition" placeholder="মেসেজ লিখুন..." onkeypress="handleEnter(event)">
+                <button onclick="sendMessage()" class="bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center shadow"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+
         <nav class="glass absolute bottom-0 left-0 right-0 z-40 flex justify-around py-3 px-2 shadow-lg">
             <div onclick="switchTab('home-page', this)" class="nav-item active flex flex-col items-center gap-1 p-2 rounded-xl text-pink-500 w-16 cursor-pointer"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold">হোম</span></div>
             <div id="nav-task" onclick="switchTab('task-page', this)" class="nav-item flex flex-col items-center gap-1 p-2 rounded-xl text-gray-400 w-16 cursor-pointer"><i class="fa-solid fa-list-check text-xl"></i><span class="text-[10px] font-bold">টাস্ক</span></div>
@@ -264,7 +257,7 @@
         };
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, query, where, getDocs, limit, collection, addDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, query, where, getDocs, limit, collection, addDoc, serverTimestamp, increment, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -272,6 +265,7 @@
 
         let currentUser = null, userData = null, appConfig = {};
         let selectedMethod = "";
+        let chatUnsub = null;
 
         // UI Helpers
         window.switchTab = (id, btn) => {
@@ -309,7 +303,6 @@
                     headerAvatar.innerHTML = `<img src="${logoUrl}" class="logo-img" alt="Logo">`;
                 }
 
-                // --- Payment Methods Logic (Updated for Logo & Tick) ---
                 renderPaymentMethods(appConfig.paymentMethods || []);
 
                 const limits = appConfig.limits || {};
@@ -320,7 +313,6 @@
                 document.getElementById('limit-scratch-task').innerText = limits.scratch || 0;
                 document.getElementById('min-withdraw-display').innerText = appConfig.minWithdraw || 50;
                 
-                // --- FIXED: Updated Marquee Logic ---
                 const notices = appConfig.notices || [];
                 if(notices.length > 0) document.getElementById('notice-text').innerText = notices.map(n => n.text).join(' | ');
 
@@ -333,7 +325,6 @@
             }
         }
 
-        // Render Function for User App (WITH TICK MARK)
         function renderPaymentMethods(methods) {
             const container = document.getElementById('payment-methods-grid');
             if(methods.length === 0) {
@@ -441,6 +432,7 @@
                 await loadConfig();
                 await loadUserData();
                 loadPaymentHistory();
+                initChat();
                 document.getElementById('auth-screen').classList.add('hidden');
                 document.getElementById('app-content').classList.remove('hidden');
                 document.getElementById('app-content').classList.add('flex');
@@ -451,7 +443,66 @@
             }
         });
 
-        // --- SOCIAL TASK LOGIC ---
+        // --- CHAT LOGIC ---
+        window.toggleChat = () => {
+            const modal = document.getElementById('live-chat-modal');
+            modal.classList.toggle('translate-y-full');
+        };
+
+        window.handleEnter = (e) => {
+            if(e.key === 'Enter') sendMessage();
+        }
+
+        function initChat() {
+            if(chatUnsub) chatUnsub();
+            const q = query(collection(db, "chats", currentUser.uid, "messages"), orderBy("timestamp", "asc"));
+            chatUnsub = onSnapshot(q, (snapshot) => {
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const isMe = data.sender === 'user';
+                    const bubbleClass = isMe ? 'chat-bubble-me' : 'chat-bubble-admin';
+                    
+                    chatBox.innerHTML += `
+                        <div class="mb-3 flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                            <div class="${bubbleClass} break-words">
+                                ${data.text}
+                            </div>
+                        </div>
+                    `;
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        window.sendMessage = async () => {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            input.value = '';
+            
+            // 1. Add message to subcollection
+            await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
+                text: text,
+                sender: 'user',
+                timestamp: serverTimestamp()
+            });
+
+            // 2. Update parent doc for admin list
+            const parentRef = doc(db, "chats", currentUser.uid);
+            await setDoc(parentRef, {
+                userId: currentUser.uid,
+                userName: userData.name,
+                lastMessage: text,
+                lastMessageTime: serverTimestamp(),
+                unreadCount: increment(1)
+            }, { merge: true });
+        };
+        // -----------------
+
+        // Social Task Logic (UPDATED FOR TIKTOK)
         function renderTasks() {
             const container = document.getElementById('social-tasks-container');
             const tasks = appConfig.socialTasks || [];
@@ -461,8 +512,13 @@
             container.innerHTML = '';
             tasks.forEach(t => {
                 const isCompleted = completedMap[t.id] === today;
-                const icon = t.type === 'youtube' ? 'fa-youtube text-red-600' : (t.type === 'facebook' ? 'fa-facebook text-blue-600' : 'fa-telegram text-blue-400');
                 
+                // Icon Logic
+                let icon = 'fa-telegram text-blue-400';
+                if (t.type === 'youtube') icon = 'fa-youtube text-red-600';
+                else if (t.type === 'facebook') icon = 'fa-facebook text-blue-600';
+                else if (t.type === 'tiktok') icon = 'fa-tiktok text-black'; // Added TikTok
+
                 const submitBtnClass = isCompleted ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 shadow-lg";
                 const submitBtnText = isCompleted ? "Done" : "Submit";
 
@@ -498,6 +554,7 @@
             loadUserData();
         };
 
+        // Ad Task with Dynamic Points
         window.startAdTask = async (type) => {
             const current = (userData.dailyCounts || {})[type] || 0;
             const max = (appConfig.limits || {})[type] || 0;
@@ -506,7 +563,15 @@
             
             if(typeof window.show_10207269 === 'function') {
                 window.show_10207269().then(async () => {
-                    const reward = type === 'video' ? 50 : (type === 'spin' ? 20 : 30);
+                    // DYNAMIC REWARDS LOGIC
+                    let reward = 50; // default fallbacks
+                    if(appConfig.rewards && appConfig.rewards[type]) {
+                        reward = appConfig.rewards[type];
+                    } else {
+                        if(type === 'spin') reward = 20;
+                        if(type === 'scratch') reward = 30;
+                    }
+
                     const updateKey = `dailyCounts.${type}`;
                     await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(reward), [updateKey]: increment(1) });
                     Swal.fire('Success', `${reward} কয়েন!`, 'success');
@@ -533,7 +598,6 @@
             el.classList.add('pay-selected');
         };
 
-        // Withdraw Function - UPDATED WITH 11 DIGIT VALIDATION
         window.submitWithdraw = async () => {
             const amount = document.getElementById('w-amount').value;
             const number = document.getElementById('w-number').value;
@@ -543,22 +607,12 @@
             if(!selectedMethod) return Swal.fire('Error', 'মেথড সিলেক্ট করুন', 'warning');
             if(amount < min) return Swal.fire('Error', `মিনিমাম ${min} টাকা`, 'warning');
             if(amount > balanceTk) return Swal.fire('Error', 'ব্যালেন্স নেই', 'warning');
-            
-            // *** VALIDATION LOGIC ***
             if(!number) return Swal.fire('Error', 'নাম্বার দিন', 'warning');
-            
-            // Check if exactly 11 digits (0-9)
-            if(!/^\d{11}$/.test(number)) {
-                return Swal.fire('Error', 'সঠিক ১১ ডিজিটের নাম্বার দিন (যেমন: 01xxxxxxxxx)', 'warning');
-            }
-            // ****************************
+            if(!/^\d{11}$/.test(number)) { return Swal.fire('Error', 'সঠিক ১১ ডিজিটের নাম্বার দিন (যেমন: 01xxxxxxxxx)', 'warning'); }
 
             const processWithdraw = async () => {
                  try {
-                    Swal.fire({
-                        title: 'প্রসেসিং...',
-                        didOpen: () => { Swal.showLoading(); }
-                    });
+                    Swal.fire({ title: 'প্রসেসিং...', didOpen: () => { Swal.showLoading(); } });
                     await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-(amount * 100)) });
                     await addDoc(collection(db, "withdrawals"), {
                         userId: currentUser.uid, userName: userData.name, amount: parseInt(amount),
